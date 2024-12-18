@@ -4,6 +4,7 @@ import sharp from 'sharp';
 
 // Configurações do arquivo de códigos
 const CODES_FILE_PATH = path.join(process.cwd(), 'src/app/data/voucher-codes.json');
+const FONT_PATH = path.join(process.cwd(), 'public/fonts/Intro.ttf');
 
 // Configurações de posicionamento do texto
 const CANVAS_WIDTH = 1080;
@@ -62,6 +63,17 @@ interface VoucherData {
   email: string;
 }
 
+// Função para converter fonte para base64
+function getFontBase64() {
+  try {
+    const fontBuffer = fs.readFileSync(FONT_PATH);
+    return `data:font/truetype;charset=utf-8;base64,${fontBuffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Error loading font:', error);
+    return '';
+  }
+}
+
 // Função para gerar código aleatório
 function generateUniqueCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -108,12 +120,22 @@ function saveCode(code: string): void {
 // Função para gerar a imagem do voucher
 export async function generateVoucherImage(data: VoucherData): Promise<Buffer> {
   const code = generateUniqueCode();
+  const fontBase64 = getFontBase64();
+  
   const svgText = `
     <svg width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}">
-      <style>
-        .text { font-family: Intro bold; fill: white; }
-        .black-text { font-family: Intro bold; fill: black; }
-      </style>
+      <defs>
+        <style>
+          @font-face {
+            font-family: 'Intro';
+            src: url('${fontBase64}') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+          }
+          .text { font-family: 'Intro'; fill: white; font-weight: bold; }
+          .black-text { font-family: 'Intro'; fill: black; font-weight: bold; }
+        </style>
+      </defs>
       <text x="${COURTESY_NAME_CONFIG.x}" y="${COURTESY_NAME_CONFIG.y}" 
             class="black-text" text-anchor="middle" font-size="${COURTESY_NAME_CONFIG.fontSize}px">
         ${data.courtesyName.toUpperCase()}
